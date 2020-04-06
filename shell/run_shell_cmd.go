@@ -12,8 +12,8 @@ import (
 	"strings"
 	"syscall"
 
-	"github.com/gruntwork-io/terragrunt/errors"
-	"github.com/gruntwork-io/terragrunt/options"
+	"github.com/mauriciopoppe/terragrunt/errors"
+	"github.com/mauriciopoppe/terragrunt/options"
 )
 
 // Run the given Terraform command

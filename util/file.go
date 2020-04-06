@@ -8,8 +8,8 @@ import (
 	"strings"
 
 	"fmt"
-	"github.com/gruntwork-io/terragrunt/errors"
 	"github.com/mattn/go-zglob"
+	"github.com/mauriciopoppe/terragrunt/errors"
 )
 
 // Return true if the given file exists

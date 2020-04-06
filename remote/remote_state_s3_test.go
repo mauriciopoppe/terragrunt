@@ -2,8 +2,8 @@ package remote
 
 import (
 	"github.com/aws/aws-sdk-go/aws"
-	"github.com/gruntwork-io/terragrunt/aws_helper"
-	"github.com/gruntwork-io/terragrunt/options"
+	"github.com/mauriciopoppe/terragrunt/aws_helper"
+	"github.com/mauriciopoppe/terragrunt/options"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"testing"

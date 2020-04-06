@@ -5,12 +5,13 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 
-	"github.com/gruntwork-io/terragrunt/config"
-	"github.com/gruntwork-io/terragrunt/errors"
-	"github.com/gruntwork-io/terragrunt/options"
-	"github.com/gruntwork-io/terragrunt/util"
+	"github.com/mauriciopoppe/terragrunt/config"
+	"github.com/mauriciopoppe/terragrunt/errors"
+	"github.com/mauriciopoppe/terragrunt/options"
+	"github.com/mauriciopoppe/terragrunt/util"
 	"github.com/urfave/cli"
 )
 
@@ -84,6 +85,12 @@ func parseTerragruntOptionsFromArgs(args []string, writer, errWriter io.Writer) 
 
 	ignoreExternalDependencies := parseBooleanArg(args, OPT_TERRAGRUNT_IGNORE_EXTERNAL_DEPENDENCIES, false)
 
+	envValue, envProvided := os.LookupEnv("TERRAGRUNT_PARALLELISM")
+	parallelism, err := parseIntArg(args, OPT_TERRAGRUNT_PARALLELISM, envValue, envProvided, options.DEFAULT_PARALLELISM)
+	if err != nil {
+		return nil, err
+	}
+
 	iamRole, err := parseStringArg(args, OPT_TERRAGRUNT_IAM_ROLE, os.Getenv("TERRAGRUNT_IAM_ROLE"))
 	if err != nil {
 		return nil, err
@@ -118,6 +125,7 @@ func parseTerragruntOptionsFromArgs(args []string, writer, errWriter io.Writer) 
 	opts.SourceUpdate = sourceUpdate
 	opts.IgnoreDependencyErrors = ignoreDependencyErrors
 	opts.IgnoreExternalDependencies = ignoreExternalDependencies
+	opts.Parallelism = parallelism
 	opts.Writer = writer
 	opts.ErrWriter = errWriter
 	opts.Env = parseEnvironmentVariables(os.Environ())
@@ -126,6 +134,25 @@ func parseTerragruntOptionsFromArgs(args []string, writer, errWriter io.Writer) 
 	opts.IncludeDirs = includeDirs
 
 	return opts, nil
+}
+
+// Find a int argument (e.g. --foo 1) of the given name in the given list of arguments. If it's present,
+// return its value. If it is present, but has no value, return an error. If it isn't present, return envValue if provided. If not provided, return defaultValue.
+func parseIntArg(args []string, argName string, envValue string, envProvided bool, defaultValue int) (int, error) {
+	for i, arg := range args {
+		if arg == fmt.Sprintf("--%s", argName) {
+			if (i + 1) < len(args) {
+				return strconv.Atoi(args[i+1])
+			} else {
+				return 0, errors.WithStackTrace(ArgMissingValue(argName))
+			}
+		}
+	}
+	if envProvided {
+		return strconv.Atoi(envValue)
+	} else {
+		return defaultValue, nil
+	}
 }
 
 func filterTerraformExtraArgs(terragruntOptions *options.TerragruntOptions, terragruntConfig *config.TerragruntConfig) []string {

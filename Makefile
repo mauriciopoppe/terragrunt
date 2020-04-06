@@ -25,4 +25,7 @@ install-pre-commit-hook:
 	@ln -s scripts/pre-commit .git/hooks/pre-commit
 	@echo "pre-commit hook installed."
 
-.PHONY: help fmtcheck fmt install-fmt-hook
+build:
+	@sh -c "'$(CURDIR)/build.sh'"
+
+.PHONY: help fmtcheck fmt install-fmt-hook build

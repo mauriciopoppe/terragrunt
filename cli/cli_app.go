@@ -10,16 +10,16 @@ import (
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
-	"github.com/gruntwork-io/terragrunt/aws_helper"
-	"github.com/gruntwork-io/terragrunt/config"
-	"github.com/gruntwork-io/terragrunt/configstack"
-	"github.com/gruntwork-io/terragrunt/errors"
-	"github.com/gruntwork-io/terragrunt/options"
-	"github.com/gruntwork-io/terragrunt/remote"
-	"github.com/gruntwork-io/terragrunt/shell"
-	"github.com/gruntwork-io/terragrunt/util"
 	"github.com/hashicorp/go-version"
 	"github.com/mattn/go-zglob"
+	"github.com/mauriciopoppe/terragrunt/aws_helper"
+	"github.com/mauriciopoppe/terragrunt/config"
+	"github.com/mauriciopoppe/terragrunt/configstack"
+	"github.com/mauriciopoppe/terragrunt/errors"
+	"github.com/mauriciopoppe/terragrunt/options"
+	"github.com/mauriciopoppe/terragrunt/remote"
+	"github.com/mauriciopoppe/terragrunt/shell"
+	"github.com/mauriciopoppe/terragrunt/util"
 	"github.com/urfave/cli"
 )
 
@@ -37,9 +37,10 @@ const OPT_TERRAGRUNT_IGNORE_DEPENDENCY_ERRORS = "terragrunt-ignore-dependency-er
 const OPT_TERRAGRUNT_IGNORE_EXTERNAL_DEPENDENCIES = "terragrunt-ignore-external-dependencies"
 const OPT_TERRAGRUNT_EXCLUDE_DIR = "terragrunt-exclude-dir"
 const OPT_TERRAGRUNT_INCLUDE_DIR = "terragrunt-include-dir"
+const OPT_TERRAGRUNT_PARALLELISM = "terragrunt-parallelism"
 
 var ALL_TERRAGRUNT_BOOLEAN_OPTS = []string{OPT_NON_INTERACTIVE, OPT_TERRAGRUNT_SOURCE_UPDATE, OPT_TERRAGRUNT_IGNORE_DEPENDENCY_ERRORS, OPT_TERRAGRUNT_IGNORE_EXTERNAL_DEPENDENCIES, OPT_TERRAGRUNT_NO_AUTO_INIT, OPT_TERRAGRUNT_NO_AUTO_RETRY}
-var ALL_TERRAGRUNT_STRING_OPTS = []string{OPT_TERRAGRUNT_CONFIG, OPT_TERRAGRUNT_TFPATH, OPT_WORKING_DIR, OPT_DOWNLOAD_DIR, OPT_TERRAGRUNT_SOURCE, OPT_TERRAGRUNT_IAM_ROLE, OPT_TERRAGRUNT_EXCLUDE_DIR, OPT_TERRAGRUNT_INCLUDE_DIR}
+var ALL_TERRAGRUNT_STRING_OPTS = []string{OPT_TERRAGRUNT_CONFIG, OPT_TERRAGRUNT_TFPATH, OPT_WORKING_DIR, OPT_DOWNLOAD_DIR, OPT_TERRAGRUNT_SOURCE, OPT_TERRAGRUNT_IAM_ROLE, OPT_TERRAGRUNT_EXCLUDE_DIR, OPT_TERRAGRUNT_INCLUDE_DIR, OPT_TERRAGRUNT_PARALLELISM}
 
 const CMD_PLAN_ALL = "plan-all"
 const CMD_APPLY_ALL = "apply-all"
@@ -134,6 +135,7 @@ GLOBAL OPTIONS:
    terragrunt-iam-role             	    	Assume the specified IAM role before executing Terraform. Can also be set via the TERRAGRUNT_IAM_ROLE environment variable.
    terragrunt-ignore-dependency-errors      *-all commands continue processing components even if a dependency fails.
    terragrunt-ignore-external-dependencies  *-all commands will not attempt to include external dependencies
+   terragrunt-parallelism			        *-all concurrent threads
    terragrunt-exclude-dir                   Unix-style glob of directories to exclude when running *-all commands
    terragrunt-include-dir                   Unix-style glob of directories to include when running *-all commands
 
@@ -178,7 +180,7 @@ func CreateTerragruntCli(version string, writer io.Writer, errwriter io.Writer) 
 	app.Writer = writer
 	app.ErrWriter = errwriter
 	app.UsageText = `Terragrunt is a thin wrapper for Terraform that provides extra tools for working with multiple
-   Terraform modules, remote state, and locking. For documentation, see https://github.com/gruntwork-io/terragrunt/.`
+   Terraform modules, remote state, and locking. For documentation, see https://github.com/mauriciopoppe/terragrunt/.`
 
 	return app
 }
@@ -343,7 +345,7 @@ func shouldRunHook(hook config.Hook, terragruntOptions *options.TerragruntOption
 	//then execute.
 	//Skip execution if there was an error AND we care about errors
 
-	//resolves: https://github.com/gruntwork-io/terragrunt/issues/459
+	//resolves: https://github.com/mauriciopoppe/terragrunt/issues/459
 	//by helping to filter out nil errors that were acting as false positives
 	//for the len(previousExecErrors) == 0 check that used to be here
 	multiError := errors.NewMultiError(previousExecErrors...)

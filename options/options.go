@@ -4,13 +4,14 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"math"
 	"os"
 	"path/filepath"
 	"time"
 
-	"github.com/gruntwork-io/terragrunt/errors"
-	"github.com/gruntwork-io/terragrunt/util"
 	"github.com/hashicorp/go-version"
+	"github.com/mauriciopoppe/terragrunt/errors"
+	"github.com/mauriciopoppe/terragrunt/util"
 )
 
 var TERRAFORM_COMMANDS_WITH_SUBCOMMAND = []string{
@@ -20,6 +21,9 @@ var TERRAFORM_COMMANDS_WITH_SUBCOMMAND = []string{
 }
 
 const DEFAULT_MAX_FOLDERS_TO_CHECK = 100
+
+// no limits on parallelism by default (limited by GOPROCS)
+const DEFAULT_PARALLELISM = math.MaxInt32
 
 const TerragruntCacheDir = ".terragrunt-cache"
 
@@ -68,11 +72,14 @@ type TerragruntOptions struct {
 	// The ARN of an IAM Role to assume before running Terraform
 	IamRole string
 
-	// If set to true, continue running *-all commands even if a dependency has errors. This is mostly useful for 'output-all <some_variable>'. See https://github.com/gruntwork-io/terragrunt/issues/193
+	// If set to true, continue running *-all commands even if a dependency has errors. This is mostly useful for 'output-all <some_variable>'. See https://github.com/mauriciopoppe/terragrunt/issues/193
 	IgnoreDependencyErrors bool
 
 	// If set to true, skip any external dependencies when running *-all commands
 	IgnoreExternalDependencies bool
+
+	// Parallelism limits the number of commands to run concurrently during *-all commands
+	Parallelism int
 
 	// If you want stdout to go somewhere other than os.stdout
 	Writer io.Writer
@@ -134,6 +141,7 @@ func NewTerragruntOptions(terragruntConfigPath string) (*TerragruntOptions, erro
 		DownloadDir:                downloadDir,
 		IgnoreDependencyErrors:     false,
 		IgnoreExternalDependencies: false,
+		Parallelism:                DEFAULT_PARALLELISM,
 		Writer:                     os.Stdout,
 		ErrWriter:                  os.Stderr,
 		MaxFoldersToCheck:          DEFAULT_MAX_FOLDERS_TO_CHECK,
@@ -182,7 +190,7 @@ func (terragruntOptions *TerragruntOptions) Clone(terragruntConfigPath string) *
 	workingDir := filepath.Dir(terragruntConfigPath)
 
 	// Note that we clone lists and maps below as TerragruntOptions may be used and modified concurrently in the code
-	// during xxx-all commands (e.g., apply-all, plan-all). See https://github.com/gruntwork-io/terragrunt/issues/367
+	// during xxx-all commands (e.g., apply-all, plan-all). See https://github.com/mauriciopoppe/terragrunt/issues/367
 	// for more info.
 	return &TerragruntOptions{
 		TerragruntConfigPath:       terragruntConfigPath,
@@ -211,6 +219,7 @@ func (terragruntOptions *TerragruntOptions) Clone(terragruntConfigPath string) *
 		ExcludeDirs:                terragruntOptions.ExcludeDirs,
 		IncludeDirs:                terragruntOptions.IncludeDirs,
 		RunTerragrunt:              terragruntOptions.RunTerragrunt,
+		Parallelism:                terragruntOptions.Parallelism,
 	}
 }
 

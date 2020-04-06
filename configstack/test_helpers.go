@@ -4,10 +4,10 @@ import (
 	"sort"
 	"testing"
 
-	"github.com/gruntwork-io/terragrunt/errors"
-	"github.com/gruntwork-io/terragrunt/options"
-	"github.com/gruntwork-io/terragrunt/remote"
-	"github.com/gruntwork-io/terragrunt/util"
+	"github.com/mauriciopoppe/terragrunt/errors"
+	"github.com/mauriciopoppe/terragrunt/options"
+	"github.com/mauriciopoppe/terragrunt/remote"
+	"github.com/mauriciopoppe/terragrunt/util"
 	"github.com/stretchr/testify/assert"
 )
 
